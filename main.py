@@ -75,6 +75,12 @@ async def health_check() -> dict[str, str]:
     return {"status": "ok", "model": gemini_service._MODEL}
 
 
+@app.get("/trending")
+async def get_trending_rumours() -> dict:
+    from services.community import get_trending
+    return {"trending": await get_trending(limit=5)}
+
+
 @app.post("/verify", response_model=VerifyResponse)
 async def verify(request: VerifyRequest) -> VerifyResponse:
     """Fact-check a claim, URL, or image using Gemini with Google Search grounding."""
@@ -86,7 +92,14 @@ async def verify(request: VerifyRequest) -> VerifyResponse:
         )  # type: ignore[return-value]
 
     try:
-        return await gemini_service.fact_check(request, _http_client)
+        result = await gemini_service.fact_check(request, _http_client)
+        import hashlib
+        from services.community import record_check
+        _hash = hashlib.sha256(
+            ((request.text or "") + (request.url or "")).encode()
+        ).hexdigest()[:16]
+        await record_check(_hash, result.verdict, result.summary, result.harm_severity)
+        return result
     except HTTPException:
         raise
     except Exception as exc:

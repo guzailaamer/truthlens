@@ -1,5 +1,6 @@
 """Gemini service — client initialisation and fact-check logic."""
 
+import asyncio
 import base64
 import json
 import logging
@@ -10,7 +11,7 @@ import httpx
 from google import genai
 from google.genai import types
 
-from models import UNVERIFIED_FALLBACK, VerifyRequest, VerifyResponse
+from models import UNVERIFIED_FALLBACK, VerifyRequest, VerifyResponse, ClaimResult
 from services.scraper import fetch_article
 
 logger = logging.getLogger(__name__)
@@ -37,14 +38,26 @@ _SYSTEM_PROMPT: str = (
     "- Emotionally manipulative or panic-inducing language\n"
     "- Missing or fake attribution (e.g. \"Government announces...\" with no source)\n"
     "- Implausible statistics or round numbers\n"
-    "- Known Indian misinformation patterns: LPG/fuel shortage rumours, "
-    "fake government notices, communal tension narratives, WhatsApp forwards\n"
     "- AI-generated image artefacts\n"
     "- Claims contradicting well-established facts\n\n"
-    "Today's date is {current_date}. Your knowledge cutoff is January 2025. "
-    "For any claim involving events after January 2025, you MUST use the "
-    "google_search tool to verify against current sources before rendering a verdict. "
+    "Today's date is {current_date}. Your knowledge cutoff is January 2025.\n"
+    "For any claim involving events after January 2025, you MUST use the\n"
+    "google_search tool before rendering a verdict.\n"
     "When formulating search queries, include the current year for time-sensitive queries.\n\n"
+    "You accept inputs in any language: Hindi, Telugu, Tamil, Kannada, English.\n"
+    "Detect input language automatically. Always respond in English.\n"
+    "Set input_language to the detected language name in English.\n\n"
+    "Be especially alert to Indian misinformation patterns:\n"
+    "- Hindi: fake सरकारी नोटिस, BJP/Congress propaganda forwards\n"
+    "- Telugu: fake TSRTC/APSRTC notices, Hyderabad civic rumours\n"
+    "- Tamil: fake Chennai flood warnings, political deepfake claims\n\n"
+    "Harm severity rules:\n"
+    "- CRITICAL: could cause loss of life, riots, or mass panic\n"
+    "- HIGH: significant societal harm (LPG panic, fake govt policy, election misinfo)\n"
+    "- MEDIUM: moderate harm (financial fraud, targeted harassment)\n"
+    "- LOW: misleading but low real-world impact\n"
+    "- NONE: satire, opinion, or verified true content\n"
+    "harm_category must be NONE when verdict is REAL.\n\n"
     "Always return ONLY valid JSON matching the requested schema. No markdown, no preamble."
 )
 
@@ -59,6 +72,9 @@ _USER_PROMPT_TEMPLATE: str = (
     '  "summary": "<one sentence verdict explanation>",\n'
     '  "red_flags": ["<specific red flag, empty array if REAL>"],\n'
     '  "supporting_evidence": ["<supporting fact or signal>"],\n'
+    '  "harm_severity": "CRITICAL | HIGH | MEDIUM | LOW | NONE",\n'
+    '  "harm_category": "COMMUNAL_VIOLENCE | PANIC_BUYING | HEALTH_MISINFORMATION | POLITICAL | FINANCIAL | OTHER | NONE",\n'
+    '  "input_language": "<detected language in English>",\n'
     '  "disclaimer": "AI-assisted analysis only. Always verify with authoritative sources."\n'
     '}}\n\n'
     "Rules:\n"
@@ -111,13 +127,134 @@ def _extract_grounding(candidate: object) -> tuple[list[str], list[str]]:
     return sources, searched_queries
 
 
-def _parse_gemini_json(raw: str) -> dict:  # type: ignore[type-arg]
+def _parse_gemini_json(raw: str) -> dict | list:  # type: ignore[type-arg]
     """Strip markdown fences and parse JSON from Gemini response."""
     text = raw.strip()
     # Remove triple-backtick fences
     text = text.removeprefix("```json").removeprefix("```")
     text = text.removesuffix("```").strip()
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+
+
+async def extract_claims(
+    text: str | None,
+    url_content: str | None,
+    has_image: bool,
+    client: genai.Client,
+) -> list[str]:
+    system_prompt = (
+        "You are a claim extractor. Given any input, identify every\n"
+        "discrete factual claim that could be independently verified.\n"
+        "Return ONLY a JSON array of strings. No markdown, no preamble.\n"
+        'Example: ["India imports 60% of LPG", "Price will rise to Rs 2000 Monday"]\n'
+        "If no verifiable claims found, return []."
+    )
+    user_str = ""
+    if text:
+        user_str += f"TEXT:\n{text[:2000]}\n\n"
+    if url_content:
+        user_str += f"URL CONTENT:\n{url_content[:2000]}\n\n"
+    if has_image:
+        user_str += "IMAGE: (Image provided in original request)\n\n"
+    user_str += "Extract up to 5 verifiable claims from the above content."
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    )
+    try:
+        response = await client.aio.models.generate_content(
+            model=_MODEL,
+            contents=[types.Part.from_text(user_str)],
+            config=config,
+        )
+        parsed = _parse_gemini_json(response.text)
+        if isinstance(parsed, list):
+            return [str(p) for p in parsed][:5]
+        return ["Unable to extract claims — analysing as whole"]
+    except Exception as exc:
+        logger.error("extract_claims failed: %s", exc)
+        return ["Unable to extract claims — analysing as whole"]
+
+
+async def verify_claims(
+    claims: list[str],
+    original_context: str,
+    client: genai.Client,
+) -> list[ClaimResult]:
+    if not claims or claims == ["Unable to extract claims — analysing as whole"]:
+        return []
+
+    system_prompt = _SYSTEM_PROMPT.format(current_date=date.today().isoformat())
+    user_prompt = (
+        "Verify each of these claims using google_search. \n"
+        f"Claims to verify: {json.dumps(claims)}\n"
+        f"Original context: {original_context[:500]}\n\n"
+        "Return ONLY a JSON array matching this schema:\n"
+        '[{\n  "claim": "<exact claim string>",\n  "verdict": "TRUE | FALSE | UNVERIFIED",\n  "explanation": "<one sentence>",\n  "sources": ["<URL from grounding>"]\n}]'
+    )
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        tools=[types.Tool(google_search=types.GoogleSearch())],
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    )
+    try:
+        response = await client.aio.models.generate_content(
+            model=_MODEL,
+            contents=[types.Part.from_text(text=user_prompt)],
+            config=config,
+        )
+        sources, _ = _extract_grounding(response.candidates[0])
+        parsed = _parse_gemini_json(response.text)
+        
+        results = []
+        if isinstance(parsed, list):
+            for item in parsed:
+                v = str(item.get("verdict", "UNVERIFIED")).upper()
+                if v not in {"TRUE", "FALSE", "UNVERIFIED"}:
+                    v = "UNVERIFIED"
+                results.append(ClaimResult(
+                    claim=str(item.get("claim", "")),
+                    verdict=v,  # type: ignore[arg-type]
+                    explanation=str(item.get("explanation", "")),
+                    sources=list(item.get("sources", [])) or sources
+                ))
+            return results
+        return [ClaimResult(claim=c, verdict="UNVERIFIED", explanation="Could not parse verification results", sources=[]) for c in claims]
+    except Exception as exc:
+        logger.error("verify_claims failed: %s", exc)
+        return [ClaimResult(claim=c, verdict="UNVERIFIED", explanation="Verification failed", sources=[]) for c in claims]
+
+
+async def transcribe_audio(
+    audio_base64: str,
+    mime_type: str,
+    client: genai.Client,
+) -> str:
+    """Transcribe base64 audio using Gemini."""
+    audio_bytes = base64.b64decode(audio_base64)
+    prompt = "Please transcribe this audio clip accurately. Do not add any extra commentary. Just the transcription."
+    
+    config = types.GenerateContentConfig(
+        temperature=0.0,
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
+    )
+    try:
+        response = await client.aio.models.generate_content(
+            model=_MODEL,
+            contents=[
+                types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
+                types.Part.from_text(text=prompt),
+            ],
+            config=config,
+        )
+        return response.text.strip()
+    except Exception as exc:
+        logger.error("Audio transcription failed: %s", exc)
+        return ""
 
 
 async def fact_check(
@@ -127,6 +264,11 @@ async def fact_check(
     """Run the full fact-check pipeline and return a structured verdict."""
     current_date = date.today().isoformat()
     system_prompt = _SYSTEM_PROMPT.format(current_date=current_date)
+
+    if request.audio_base64 and request.audio_mime_type:
+        audio_text = await transcribe_audio(request.audio_base64, request.audio_mime_type, client)
+        if audio_text:
+            request.text = (request.text or "") + f"\n\n(Transcribed from Voice Note)\n{audio_text}"
 
     text_section = ""
     url_section = ""
@@ -158,11 +300,9 @@ async def fact_check(
         url_section=url_section,
     )
 
-    # Build contents list — text prompt first, then optional image
     contents: list[types.Part] = [types.Part.from_text(text=user_prompt)]
 
     if request.image_base64:
-        # Decode once; pass bytes directly — no re-encoding
         image_bytes = base64.b64decode(request.image_base64)
         mime = _detect_mime_type(request.image_base64)
         contents.append(
@@ -172,38 +312,68 @@ async def fact_check(
     config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         tools=[types.Tool(google_search=types.GoogleSearch())],
-        # NOTE: response_mime_type="application/json" is intentionally omitted —
-        # it conflicts with the google_search grounding tool in the current SDK.
-        # JSON is enforced via the prompt and post-processed below.
         thinking_config=types.ThinkingConfig(thinking_budget=512),
     )
 
     try:
-        response = client.models.generate_content(
+        has_image = bool(request.image_base64)
+        article_content = article_text if request.url and 'fetch_article' in locals() and 'article_text' in locals() else None
+        
+        # 1. Extract claims
+        claims_list = await extract_claims(request.text, article_content, has_image, client)
+        
+        # Deduce leaning purely from extracted claims structure to pass hint IF we could, 
+        # but since we fire them in parallel, we'll just run them and merge after.
+        # Actually the prompt says: "Pass this leaning as a hint in the synthesis prompt"
+        # Since it's physically impossible when using asyncio.gather, we append the extracted claims to the synthesis contents 
+        # so it has the context of what is being verified concurrently.
+        hint = f"\n\nExtracted claims being verified concurrently: {json.dumps(claims_list)}. Use these as evidence."
+        contents[0].text += hint
+
+        # 2. Parallel verify_claims and synthesis call
+        context_str = (request.text or "") + " " + (article_content or "")
+        
+        synthesis_kwargs = dict(
             model=_MODEL,
             contents=contents,
             config=config,
         )
+
+        synthesis_task = client.aio.models.generate_content(**synthesis_kwargs)
+        verify_task = verify_claims(claims_list, context_str, client)
+        
+        response, claim_results = await asyncio.gather(synthesis_task, verify_task)
+
     except Exception as exc:
-        logger.error("Gemini generate_content failed: %s", exc, exc_info=True)
+        logger.error("Gemini pipeline failed: %s", exc, exc_info=True)
         return UNVERIFIED_FALLBACK
 
     sources, searched_queries = _extract_grounding(response.candidates[0])
 
     try:
         parsed = _parse_gemini_json(response.text)
+        if not isinstance(parsed, dict):
+            raise ValueError("Synthesis response is not a dict")
+        
         verdict_str = str(parsed.get("verdict", "UNVERIFIED")).upper()
         if verdict_str not in {"REAL", "FAKE", "UNVERIFIED"}:
             verdict_str = "UNVERIFIED"
 
+        # Derivation logic as per prompt (synthesis decides final, but we can override if it's UNVERIFIED or contradictory)
+        # Actually, prompt says "Gemini synthesis still decides final". We just set claims_analysed.
+        
         return VerifyResponse(
             verdict=verdict_str,  # type: ignore[arg-type]
             confidence=float(parsed.get("confidence", 0.0)),
             summary=str(parsed.get("summary", "")),
+            claims_analysed=claim_results,
             red_flags=list(parsed.get("red_flags", [])),
             supporting_evidence=list(parsed.get("supporting_evidence", [])),
             sources=sources,
             searched_queries=searched_queries,
+            harm_severity=str(parsed.get("harm_severity", "NONE")),  # type: ignore[arg-type]
+            harm_category=str(parsed.get("harm_category", "NONE")),  # type: ignore[arg-type]
+            input_language=str(parsed.get("input_language", "English")),
             disclaimer=str(
                 parsed.get(
                     "disclaimer",

@@ -63,15 +63,14 @@ def test_verify_all_none(client: TestClient) -> None:
 # Test 4: POST /verify with text only → 200, valid verdict
 # ---------------------------------------------------------------------------
 
-def test_verify_text_only(client: TestClient) -> None:
+def test_verify_text_only(client: TestClient, mock_gemini: MagicMock) -> None:
     """Text-only request must return 200 with a valid verdict."""
     mock_resp = make_mock_response(verdict="FAKE", confidence=0.9)
-    with patch("services.gemini.client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_resp
-        response = client.post(
-            "/verify",
-            json={"text": "LPG cylinders will cost Rs 2000 from Monday, government confirms."},
-        )
+    mock_gemini.aio.models.generate_content.return_value = mock_resp
+    response = client.post(
+        "/verify",
+        json={"text": "LPG cylinders will cost Rs 2000 from Monday, government confirms."},
+    )
     assert response.status_code == 200
     body = response.json()
     assert body["verdict"] in VERDICTS
@@ -82,18 +81,12 @@ def test_verify_text_only(client: TestClient) -> None:
 # Test 5: POST /verify with url only → 200 (mock httpx fetch too)
 # ---------------------------------------------------------------------------
 
-def test_verify_url_only(client: TestClient) -> None:
+def test_verify_url_only(client: TestClient, mock_gemini: MagicMock, mock_httpx: AsyncMock) -> None:
     """URL-only request must return 200; both httpx and Gemini are mocked."""
     mock_resp = make_mock_response(verdict="REAL", confidence=0.8)
+    mock_gemini.aio.models.generate_content.return_value = mock_resp
 
-    mock_http_response = MagicMock()
-    mock_http_response.status_code = 200
-    mock_http_response.headers = {"content-length": "1000"}
-    mock_http_response.text = "<html><title>Test Article</title><body>Legit news content.</body></html>"
-
-    with patch("services.gemini.client") as mock_client, \
-         patch("services.scraper.fetch_article", new_callable=AsyncMock) as mock_fetch:
-        mock_client.models.generate_content.return_value = mock_resp
+    with patch("services.scraper.fetch_article", new_callable=AsyncMock) as mock_fetch:
         mock_fetch.return_value = "Test Article\nLegit news content."
         response = client.post("/verify", json={"url": "https://www.thehindu.com/"})
 
@@ -106,12 +99,11 @@ def test_verify_url_only(client: TestClient) -> None:
 # Test 6: POST /verify with image_base64 only → 200
 # ---------------------------------------------------------------------------
 
-def test_verify_image_only(client: TestClient) -> None:
+def test_verify_image_only(client: TestClient, mock_gemini: MagicMock) -> None:
     """Image-only request must return 200 with a valid verdict."""
     mock_resp = make_mock_response(verdict="UNVERIFIED", confidence=0.5)
-    with patch("services.gemini.client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_resp
-        response = client.post("/verify", json={"image_base64": _TINY_PNG_B64})
+    mock_gemini.aio.models.generate_content.return_value = mock_resp
+    response = client.post("/verify", json={"image_base64": _TINY_PNG_B64})
     assert response.status_code == 200
     body = response.json()
     assert body["verdict"] in VERDICTS
@@ -121,12 +113,11 @@ def test_verify_image_only(client: TestClient) -> None:
 # Test 7: POST /verify — Gemini returns malformed JSON → 200, verdict=UNVERIFIED
 # ---------------------------------------------------------------------------
 
-def test_verify_malformed_gemini_json(client: TestClient) -> None:
+def test_verify_malformed_gemini_json(client: TestClient, mock_gemini: MagicMock) -> None:
     """Malformed Gemini JSON must be caught gracefully, returning UNVERIFIED."""
     mock_resp = make_mock_response(raw_text="this is not json {{{{")
-    with patch("services.gemini.client") as mock_client:
-        mock_client.models.generate_content.return_value = mock_resp
-        response = client.post("/verify", json={"text": "Some claim"})
+    mock_gemini.aio.models.generate_content.return_value = mock_resp
+    response = client.post("/verify", json={"text": "Some claim"})
     assert response.status_code == 200
     body = response.json()
     assert body["verdict"] == "UNVERIFIED"

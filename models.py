@@ -19,6 +19,8 @@ class VerifyRequest(BaseModel):
     text: str | None = None
     url: str | None = None
     image_base64: str | None = None
+    audio_base64: str | None = None
+    audio_mime_type: str | None = None
 
     @field_validator("text", mode="before")
     @classmethod
@@ -70,12 +72,18 @@ class VerifyRequest(BaseModel):
 
     @model_validator(mode="after")
     def require_at_least_one(self) -> "VerifyRequest":
-        if not any([self.text, self.url, self.image_base64]):
+        if not any([self.text, self.url, self.image_base64, self.audio_base64]):
             raise ValueError(
-                "At least one of text, url, or image_base64 must be provided"
+                "At least one of text, url, image_base64, or audio_base64 must be provided"
             )
         return self
 
+
+class ClaimResult(BaseModel):
+    claim: str
+    verdict: Literal["TRUE", "FALSE", "UNVERIFIED"]
+    explanation: str
+    sources: list[str] = []
 
 class VerifyResponse(BaseModel):
     """Structured fact-check verdict returned by POST /verify."""
@@ -83,21 +91,32 @@ class VerifyResponse(BaseModel):
     verdict: Literal["REAL", "FAKE", "UNVERIFIED"]
     confidence: float
     summary: str
-    red_flags: list[str]
-    supporting_evidence: list[str]
-    sources: list[str]
-    searched_queries: list[str]
-    disclaimer: str
+    claims_analysed: list[ClaimResult] = []
+    red_flags: list[str] = []
+    supporting_evidence: list[str] = []
+    sources: list[str] = []
+    searched_queries: list[str] = []
+    harm_severity: Literal["CRITICAL", "HIGH", "MEDIUM", "LOW", "NONE"] = "NONE"
+    harm_category: Literal[
+        "COMMUNAL_VIOLENCE", "PANIC_BUYING", "HEALTH_MISINFORMATION",
+        "POLITICAL", "FINANCIAL", "OTHER", "NONE"
+    ] = "NONE"
+    input_language: str = "English"
+    disclaimer: str = "AI-assisted analysis only. Always verify with authoritative sources."
 
 
 UNVERIFIED_FALLBACK = VerifyResponse(
     verdict="UNVERIFIED",
     confidence=0.0,
     summary="Unable to parse analysis. Please try again.",
+    claims_analysed=[],
     red_flags=[],
     supporting_evidence=[],
     sources=[],
     searched_queries=[],
+    harm_severity="NONE",
+    harm_category="NONE",
+    input_language="English",
     disclaimer=(
         "AI-assisted analysis only. Always verify with authoritative sources."
     ),

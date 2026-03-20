@@ -29,6 +29,32 @@ def client() -> Generator[TestClient, None, None]:
     with TestClient(main.app, raise_server_exceptions=False) as c:
         yield c
 
+@pytest.fixture
+def mock_gemini(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Mock the Gemini client inside services.gemini."""
+    from unittest.mock import AsyncMock
+    mock_client = MagicMock()
+    mock_client.aio.models.generate_content = AsyncMock()
+    monkeypatch.setattr("services.gemini._client", mock_client)
+    return mock_client
+
+
+@pytest.fixture
+def mock_httpx(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
+    """Mock the httpx client and fetch_article to avoid real network calls."""
+    from unittest.mock import AsyncMock
+    mock_client = AsyncMock()
+    monkeypatch.setattr("main._http_client", mock_client)
+    # Also patch fetch_article just in case it's called directly
+    patcher = patch("services.scraper.fetch_article", new_callable=AsyncMock)
+    mock_fetch = patcher.start()
+    mock_fetch.return_value = "<html><body>Legit article text</body></html>"
+    # To stop patched correctly, we must add a finalizer but for simplicity we let monkeypatch handle what we can.
+    # We will use monkeypatch for fetch_article as well:
+    mock_article = AsyncMock(return_value="<html><body>Legit article text</body></html>")
+    monkeypatch.setattr("services.scraper.fetch_article", mock_article)
+    return mock_article
+
 
 # ---------------------------------------------------------------------------
 # Gemini response mock builders
@@ -43,6 +69,9 @@ def make_mock_response(
     sources: list | None = None,
     searched_queries: list | None = None,
     raw_text: str | None = None,
+    harm_severity: str = "NONE",
+    harm_category: str = "NONE",
+    input_language: str = "English",
 ) -> MagicMock:
     """Build a mock Gemini response object with grounding metadata."""
     import json
@@ -58,6 +87,9 @@ def make_mock_response(
         "summary": summary,
         "red_flags": red_flags,
         "supporting_evidence": supporting_evidence,
+        "harm_severity": harm_severity,
+        "harm_category": harm_category,
+        "input_language": input_language,
         "disclaimer": "AI-assisted analysis only. Always verify with authoritative sources.",
     }
 

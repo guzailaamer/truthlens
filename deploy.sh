@@ -21,7 +21,8 @@ gcloud services enable \
   run.googleapis.com \
   cloudbuild.googleapis.com \
   aiplatform.googleapis.com \
-  logging.googleapis.com
+  logging.googleapis.com \
+  firestore.googleapis.com
 
 echo "==> Granting Vertex AI access to default compute service account..."
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
@@ -34,6 +35,12 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --role="roles/aiplatform.user" \
   --condition=None \
   2>&1 || echo "WARNING: IAM binding failed — check that you have resourcemanager.projects.setIamPolicy permission."
+
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:${SA}" \
+  --role="roles/datastore.user" \
+  --condition=None \
+  2>&1 || echo "WARNING: IAM binding failed for datastore.user"
 
 echo "==> Building and submitting image via Cloud Build..."
 gcloud builds submit --tag "gcr.io/$PROJECT_ID/truthlens"

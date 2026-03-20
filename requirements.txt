@@ -5,3 +5,4 @@ httpx
 beautifulsoup4
 pydantic>=2.0
 google-cloud-logging
+google-cloud-firestore
