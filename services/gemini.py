@@ -139,8 +139,19 @@ async def fact_check(
             article_text = await fetch_article(request.url, http_client)
             url_section = f"ARTICLE CONTENT (from {request.url}):\n{article_text}\n\n"
         except Exception as exc:
-            logger.error("scraper failed for url=%s: %s", request.url, exc)
-            raise
+            # Scraping failed (403 from NDTV, Cloudflare, X.com, paywalls, etc.).
+            # Graceful fallback: pass the raw URL to Gemini and let its Google Search
+            # grounding retrieve and verify the content directly. This is more robust
+            # than returning a hard 422 error.
+            logger.warning(
+                "Scraping failed for url=%s (%s) — falling back to Gemini Google Search",
+                request.url, exc,
+            )
+            url_section = (
+                f"URL TO ANALYSE: {request.url}\n"
+                f"NOTE: Direct article fetch was not possible. "
+                f"Use google_search to look up this URL and verify its content.\n\n"
+            )
 
     user_prompt = _USER_PROMPT_TEMPLATE.format(
         text_section=text_section,

@@ -17,12 +17,25 @@ _STRIP_TAGS = {"script", "style", "nav", "footer", "header", "noscript"}
 
 async def fetch_article(url: str, client: httpx.AsyncClient) -> str:
     """Fetch a URL and extract readable article text, truncated to 3000 chars."""
+    # Mimic a real browser to avoid 403 rejections from news sites (NDTV, TheHindu, etc.)
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/122.0.0.0 Safari/537.36"
+        ),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+    }
     try:
         response = await client.get(
             url,
+            headers=headers,
             timeout=_FETCH_TIMEOUT,
             follow_redirects=True,
         )
+
     except httpx.TimeoutException as exc:
         logger.error("URL fetch timed out: url=%s error=%s", url, exc)
         raise HTTPException(
