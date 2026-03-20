@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
   <meta name="description" content="AI-powered fact checker for WhatsApp forwards and viral news">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       /* Base ui-ux-pro-max colors */
@@ -34,15 +37,19 @@
       --unclear: #b45309;
       --unclear-bg: #fffbeb;
       --unclear-border: #fde68a;
-      
-      --critical-bg: #fce8e8; --critical-text: #7f1d1d;
-      --high-bg: #fff3e0;     --high-text: #7c2d12;
-      --medium-bg: #fffde7;   --medium-text: #78350f;
-      --low-bg: #f9fbe7;      --low-text: #3f5e00;
 
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-      --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+      --critical-bg: #fce8e8;
+      --critical-text: #7f1d1d;
+      --high-bg: #fff3e0;
+      --high-text: #7c2d12;
+      --medium-bg: #fffde7;
+      --medium-text: #78350f;
+      --low-bg: #f9fbe7;
+      --low-text: #3f5e00;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
     }
 
     @media (prefers-color-scheme: dark) {
@@ -55,19 +62,34 @@
         --color-input-bg: #0F172A;
 
         --brand: #22D3EE;
-        --real: #4ade80;  --real-bg: #052e16;  --real-border: #166534;
-        --fake: #f87171;  --fake-bg: #450a0a;  --fake-border: #991b1b;
-        --unclear: #fbbf24; --unclear-bg: #451a03; --unclear-border: #92400e;
-        
-        --critical-bg: #7f1d1d; --critical-text: #fce8e8;
-        --high-bg: #7c2d12;     --high-text: #fff3e0;
-        --medium-bg: #78350f;   --medium-text: #fffde7;
-        --low-bg: #3f5e00;      --low-text: #f9fbe7;
+        --real: #4ade80;
+        --real-bg: #052e16;
+        --real-border: #166534;
+        --fake: #f87171;
+        --fake-bg: #450a0a;
+        --fake-border: #991b1b;
+        --unclear: #fbbf24;
+        --unclear-bg: #451a03;
+        --unclear-border: #92400e;
+
+        --critical-bg: #7f1d1d;
+        --critical-text: #fce8e8;
+        --high-bg: #7c2d12;
+        --high-text: #fff3e0;
+        --medium-bg: #78350f;
+        --medium-text: #fffde7;
+        --low-bg: #3f5e00;
+        --low-text: #f9fbe7;
       }
     }
 
     /* Reset & Base */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       background-color: var(--color-background);
@@ -76,17 +98,26 @@
       padding-bottom: 64px;
       transition: background-color 0.3s, color 0.3s;
     }
-    h1, h2, h3, h4, h5, h6 {
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       font-family: 'Newsreader', serif;
       font-weight: 600;
     }
-    button, input, textarea {
+
+    button,
+    input,
+    textarea {
       font-family: inherit;
     }
 
     /* Layout */
     .container {
-      max-w-width: 680px;
+      max-width: 680px;
       margin: 0 auto;
       padding: 0 16px;
       width: 100%;
@@ -105,11 +136,13 @@
       background: var(--color-background);
       z-index: 10;
     }
+
     .logo-container {
       display: flex;
       align-items: center;
       gap: 8px;
     }
+
     .logo-mark {
       background-color: var(--brand);
       color: white;
@@ -120,8 +153,17 @@
       align-items: center;
       justify-content: center;
     }
-    .logo-text { font-size: 17px; font-weight: 600; }
-    .logo-by { font-size: 11px; color: var(--color-muted); }
+
+    .logo-text {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .logo-by {
+      font-size: 11px;
+      color: var(--color-muted);
+    }
+
     .badge-live {
       display: flex;
       align-items: center;
@@ -134,6 +176,7 @@
       padding: 4px 8px;
       border-radius: 12px;
     }
+
     .badge-live-dot {
       width: 6px;
       height: 6px;
@@ -146,8 +189,19 @@
       text-align: center;
       margin: 32px 0;
     }
-    .hero h1 { font-size: 28px; font-weight: 500; margin-bottom: 8px; }
-    .hero p { font-size: 14px; color: var(--color-muted); max-width: 400px; margin: 0 auto; }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 14px;
+      color: var(--color-muted);
+      max-width: 400px;
+      margin: 0 auto;
+    }
 
     /* Card */
     .card {
@@ -168,6 +222,7 @@
       margin-bottom: 16px;
       overflow-x: auto;
     }
+
     .tab {
       padding: 8px 12px;
       font-size: 14px;
@@ -180,6 +235,7 @@
       cursor: pointer;
       transition: all 0.2s;
     }
+
     .tab.active {
       color: var(--brand);
       background: var(--color-card-bg);
@@ -188,31 +244,61 @@
       margin-bottom: -1px;
       padding-bottom: 9px;
     }
+
     .tab:hover:not(.active):not(.disabled) {
       color: var(--color-text);
       background: var(--color-input-bg);
     }
+
     .tab.disabled {
       cursor: not-allowed;
       opacity: 0.5;
     }
-    
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* Form Elements */
-    .input-label { /* visually hidden for a11y but present */
-      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;
+    .input-label {
+      /* visually hidden for a11y but present */
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
     }
+
     .input-label-visible {
-      display: block; font-size: 14px; font-weight: 500; margin-bottom: 8px; color: var(--color-text);
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--color-text);
     }
-    textarea, input[type="url"] {
+
+    textarea,
+    input[type="url"] {
       width: 100%;
       background: var(--color-input-bg);
       border: 1px solid var(--color-border);
@@ -223,13 +309,24 @@
       resize: vertical;
       transition: border-color 0.2s;
     }
-    textarea:focus, input[type="url"]:focus {
+
+    textarea:focus,
+    input[type="url"]:focus {
       outline: none;
       border-color: var(--brand);
       box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2);
     }
-    .helper-text { font-size: 12px; color: var(--color-muted); margin-top: 8px; text-align: right; }
-    .helper-text-left { text-align: left; }
+
+    .helper-text {
+      font-size: 12px;
+      color: var(--color-muted);
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    .helper-text-left {
+      text-align: left;
+    }
 
     /* Drop Zone */
     .drop-zone {
@@ -241,11 +338,35 @@
       transition: all 0.2s;
       background: var(--color-input-bg);
     }
-    .drop-zone:hover { border-color: var(--brand); background: var(--color-background); }
-    .drop-zone.drag-over { border-color: var(--brand); background: var(--color-background); border-style: solid; }
-    .icon-svg { width: 24px; height: 24px; color: var(--color-muted); margin-bottom: 12px; }
-    .drop-text { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-    .drop-subtext { font-size: 12px; color: var(--color-muted); }
+
+    .drop-zone:hover {
+      border-color: var(--brand);
+      background: var(--color-background);
+    }
+
+    .drop-zone.drag-over {
+      border-color: var(--brand);
+      background: var(--color-background);
+      border-style: solid;
+    }
+
+    .icon-svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-muted);
+      margin-bottom: 12px;
+    }
+
+    .drop-text {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .drop-subtext {
+      font-size: 12px;
+      color: var(--color-muted);
+    }
 
     /* Button */
     .btn-primary {
@@ -265,30 +386,38 @@
       transition: all 0.2s;
       margin-top: 16px;
     }
+
     .btn-primary:hover:not(:disabled) {
       background: var(--brand-dark);
       transform: translateY(-1px);
     }
+
     .btn-primary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
 
     /* Result Card */
-    #result-card { display: none; }
+    #result-card {
+      display: none;
+    }
+
     .verdict-band {
       border-left: 4px solid var(--color-border);
       padding: 16px;
       background: var(--color-input-bg);
-      border-radius: 8px 12px 12px 8px; /* Slightly rounded left, fully rounded right */
+      border-radius: 8px 12px 12px 8px;
+      /* Slightly rounded left, fully rounded right */
       margin-bottom: 24px;
     }
+
     .verdict-row-1 {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
+
     .verdict-pill {
       display: flex;
       align-items: center;
@@ -296,27 +425,39 @@
       font-weight: 700;
       font-size: 18px;
     }
-    .verdict-pill svg { width: 20px; height: 20px; }
-    .confidence { font-size: 14px; font-weight: 500; color: var(--color-muted); }
-    
+
+    .verdict-pill svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .confidence {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-muted);
+    }
+
     .verdict-row-2 {
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
     }
-    .severity-pill, .lang-pill {
+
+    .severity-pill,
+    .lang-pill {
       font-size: 11px;
       font-weight: 600;
       padding: 2px 8px;
       border-radius: 12px;
       text-transform: uppercase;
     }
+
     .summary-p {
       font-size: 14px;
       line-height: 1.6;
       margin-bottom: 16px;
     }
-    
+
     .progress-track {
       width: 100%;
       height: 4px;
@@ -324,6 +465,7 @@
       border-radius: 2px;
       overflow: hidden;
     }
+
     .progress-fill {
       height: 100%;
       width: 0%;
@@ -339,12 +481,14 @@
       font-weight: 600;
       margin-bottom: 12px;
     }
+
     .claims-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
       margin-bottom: 24px;
     }
+
     .claim-row {
       display: flex;
       gap: 12px;
@@ -354,6 +498,7 @@
       background: var(--color-input-bg);
       font-size: 14px;
     }
+
     .claim-mini-pill {
       font-size: 10px;
       font-weight: 700;
@@ -361,7 +506,10 @@
       border-radius: 4px;
       flex-shrink: 0;
     }
-    .claim-text { flex-grow: 1; }
+
+    .claim-text {
+      flex-grow: 1;
+    }
 
     /* Red Flags */
     .red-flags-box {
@@ -371,6 +519,7 @@
       padding: 16px;
       margin-bottom: 24px;
     }
+
     .red-flags-box h3 {
       font-size: 14px;
       color: #b91c1c;
@@ -379,6 +528,7 @@
       align-items: center;
       gap: 6px;
     }
+
     .red-flags-box ul {
       list-style: none;
       font-size: 13px;
@@ -387,19 +537,27 @@
       flex-direction: column;
       gap: 4px;
     }
+
     .red-flags-box li {
       display: flex;
       align-items: flex-start;
       gap: 8px;
     }
+
     .red-flags-box li::before {
       content: "•";
       color: #b91c1c;
       font-weight: bold;
     }
+
     @media (prefers-color-scheme: dark) {
-      .red-flags-box h3 { color: #f87171; }
-      .red-flags-box li::before { color: #f87171; }
+      .red-flags-box h3 {
+        color: #f87171;
+      }
+
+      .red-flags-box li::before {
+        color: #f87171;
+      }
     }
 
     /* Sources */
@@ -408,6 +566,7 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+
     .source-chip {
       display: inline-flex;
       align-items: center;
@@ -421,21 +580,30 @@
       text-decoration: none;
       transition: all 0.2s;
     }
+
     .source-chip:hover {
       background: var(--brand);
       color: white;
       border-color: var(--brand);
     }
+
     .source-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
       background: var(--brand);
     }
-    .source-chip:hover .source-dot { background: white; }
+
+    .source-chip:hover .source-dot {
+      background: white;
+    }
 
     /* Trending */
-    #trending-section { display: none; margin-bottom: 32px; }
+    #trending-section {
+      display: none;
+      margin-bottom: 32px;
+    }
+
     .trending-header {
       font-size: 14px;
       font-weight: 600;
@@ -444,6 +612,7 @@
       gap: 8px;
       margin-bottom: 16px;
     }
+
     .pulse-dot {
       width: 8px;
       height: 8px;
@@ -451,17 +620,28 @@
       background: #ef4444;
       animation: pulse 2s infinite;
     }
+
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
     }
+
     .trending-list {
       list-style: none;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .trending-item {
       display: flex;
       align-items: flex-start;
@@ -472,9 +652,25 @@
       padding: 12px;
       font-size: 13px;
     }
-    .trend-pill { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
-    .trend-summary { flex-grow: 1; }
-    .trend-meta { font-size: 11px; color: var(--color-muted); flex-shrink: 0; text-align: right; }
+
+    .trend-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    .trend-summary {
+      flex-grow: 1;
+    }
+
+    .trend-meta {
+      font-size: 11px;
+      color: var(--color-muted);
+      flex-shrink: 0;
+      text-align: right;
+    }
 
     /* Footer */
     footer {
@@ -483,37 +679,63 @@
       color: var(--color-muted);
       margin-top: 48px;
     }
+
     .footer-links {
       display: flex;
       justify-content: center;
       gap: 16px;
       margin-top: 8px;
     }
+
     .footer-links a {
       color: var(--brand);
       text-decoration: none;
     }
-    .footer-links a:hover { text-decoration: underline; }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
 
     /* Utilities */
-    .hidden { display: none !important; }
-    .spin { animation: spin 1s linear infinite; }
-    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .hidden {
+      display: none !important;
+    }
+
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
     .spin-svg {
-      width: 18px; height: 18px;
+      width: 18px;
+      height: 18px;
       transform-origin: center;
     }
-    
-    .status-error { color: var(--fake); font-size: 14px; margin-top: 12px; text-align: center; }
 
+    .status-error {
+      color: var(--fake);
+      font-size: 14px;
+      margin-top: 12px;
+      text-align: center;
+    }
   </style>
 </head>
+
 <body>
 
   <header class="header container">
     <div class="logo-container">
       <div class="logo-mark">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
       </div>
       <div>
         <span class="logo-text">TruthLens</span>
@@ -527,7 +749,7 @@
   </header>
 
   <main class="container">
-    
+
     <div class="hero" id="hero">
       <h1>Is this real?</h1>
       <p>Paste a WhatsApp forward, news URL, or screenshot.<br>Get a sourced verdict in seconds.</p>
@@ -538,7 +760,8 @@
       <div class="trending-header">
         <div class="pulse-dot"></div>
         <span>Trending now</span>
-        <span style="color:var(--color-muted); font-weight:400; font-size:12px;">Claims being checked across India</span>
+        <span style="color:var(--color-muted); font-weight:400; font-size:12px;">Claims being checked across
+          India</span>
       </div>
       <ul class="trending-list" id="trending-list"></ul>
     </section>
@@ -546,16 +769,19 @@
     <!-- INPUT CARD -->
     <section class="card">
       <div class="tabs" role="tablist">
-        <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-text" id="btn-tab-text">Text</button>
+        <button class="tab active" role="tab" aria-selected="true" aria-controls="tab-text"
+          id="btn-tab-text">Text</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-url" id="btn-tab-url">URL</button>
-        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-img" id="btn-tab-img">Screenshot</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="tab-img"
+          id="btn-tab-img">Screenshot</button>
         <button class="tab" role="tab" aria-selected="false" aria-controls="tab-voice" id="btn-tab-voice">Voice</button>
       </div>
 
       <!-- TEXT TAB -->
       <div id="tab-text" class="tab-content active" role="tabpanel" aria-labelledby="btn-tab-text">
         <label for="text-input" class="input-label">Claim text</label>
-        <textarea id="text-input" rows="4" placeholder="Paste a WhatsApp forward, claim or headline...&#10;(Hindi, Telugu, Tamil, English all supported)"></textarea>
+        <textarea id="text-input" rows="4"
+          placeholder="Paste a WhatsApp forward, claim or headline...&#10;(Hindi, Telugu, Tamil, English all supported)"></textarea>
         <div class="helper-text"><span id="char-count">0</span> / 5000</div>
       </div>
 
@@ -570,7 +796,12 @@
       <div id="tab-img" class="tab-content" role="tabpanel" aria-labelledby="btn-tab-img">
         <label for="file-input" class="input-label-visible">Upload screenshot</label>
         <div class="drop-zone" id="drop-zone" role="button" tabindex="0">
-          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
           <div class="drop-text" id="drop-text">Drop screenshot here or click to upload</div>
           <div class="drop-subtext">Supports WhatsApp, Instagram, Twitter/X screenshots</div>
         </div>
@@ -581,7 +812,12 @@
       <div id="tab-voice" class="tab-content" role="tabpanel" aria-labelledby="btn-tab-voice">
         <label for="voice-input" class="input-label-visible">Upload audio clip</label>
         <div class="drop-zone" id="voice-drop-zone" role="button" tabindex="0">
-          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+          </svg>
           <div class="drop-text" id="voice-drop-text">Drop audio file here or click to upload</div>
           <div class="drop-subtext">Supports MP3, WAV, M4A, OGG</div>
         </div>
@@ -603,20 +839,23 @@
       <div class="verdict-band" id="verdict-band">
         <div class="verdict-row-1">
           <div class="verdict-pill" id="verdict-pill">
-            <svg id="verdict-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
+            <svg id="verdict-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></svg>
             <span id="verdict-text">VERDICT</span>
           </div>
           <div class="confidence" id="confidence-text">0% confident</div>
         </div>
-        
+
         <div class="verdict-row-2">
           <div id="severity-pill" class="severity-pill hidden"></div>
-          <div id="lang-pill" class="lang-pill hidden" style="background:var(--color-border); color:var(--color-text);"></div>
+          <div id="lang-pill" class="lang-pill hidden" style="background:var(--color-border); color:var(--color-text);">
+          </div>
         </div>
 
         <p class="summary-p" id="verdict-summary"></p>
-        
-        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="confidence-bar">
+
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+          id="confidence-bar">
           <div class="progress-fill" id="confidence-fill"></div>
         </div>
       </div>
@@ -627,7 +866,11 @@
       </div>
 
       <div id="red-flags-section" class="red-flags-box hidden">
-        <h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg> Red Flags</h3>
+        <h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+            <line x1="4" y1="22" x2="4" y2="15"></line>
+          </svg> Red Flags</h3>
         <ul id="red-flags-list"></ul>
       </div>
 
@@ -659,7 +902,7 @@
         if (tab.disabled) return;
         tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
         contents.forEach(c => c.classList.remove('active'));
-        
+
         tab.classList.add('active');
         tab.setAttribute('aria-selected', 'true');
         const targetId = tab.getAttribute('aria-controls');
@@ -708,7 +951,7 @@
         showError("Please upload an image file.");
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         currentImageBase64 = e.target.result.split(',')[1];
@@ -749,7 +992,7 @@
         showError("Please upload a valid audio file.");
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         currentAudioBase64 = e.target.result.split(',')[1];
@@ -856,7 +1099,7 @@
 
       const confPct = Math.round((data.confidence || 0) * 100);
       document.getElementById('confidence-text').textContent = `${confPct}% confident`;
-      
+
       const cBar = document.getElementById('confidence-bar');
       cBar.setAttribute('aria-valuenow', confPct);
       const cFill = document.getElementById('confidence-fill');
@@ -936,7 +1179,7 @@
             a.setAttribute('aria-label', url.hostname);
             a.innerHTML = `<div class="source-dot"></div> ${url.hostname.replace('www.', '')}`;
             sChips.appendChild(a);
-          } catch(e) {}
+          } catch (e) { }
         });
         sSec.classList.remove('hidden');
       } else {
@@ -958,11 +1201,11 @@
             const vStyle = COLOR_MAP[t.verdict] || COLOR_MAP.UNVERIFIED;
             const li = document.createElement('li');
             li.className = 'trending-item';
-            
+
             let sevBadge = '';
             if (t.harm_severity === 'CRITICAL' || t.harm_severity === 'HIGH') {
-               const sStyle = SEVERITY_MAP[t.harm_severity];
-               sevBadge = `<div style="font-size:10px; font-weight:700; padding:2px 4px; border-radius:4px; background:${sStyle.bg}; color:${sStyle.text}; margin-top:4px; display:inline-block;">${t.harm_severity} RISK</div>`;
+              const sStyle = SEVERITY_MAP[t.harm_severity];
+              sevBadge = `<div style="font-size:10px; font-weight:700; padding:2px 4px; border-radius:4px; background:${sStyle.bg}; color:${sStyle.text}; margin-top:4px; display:inline-block;">${t.harm_severity} RISK</div>`;
             }
 
             li.innerHTML = `
@@ -974,7 +1217,7 @@
           });
           document.getElementById('trending-section').style.display = 'block';
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -983,4 +1226,5 @@
 
   </script>
 </body>
+
 </html>
