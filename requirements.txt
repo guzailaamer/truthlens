@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+google-genai>=1.51.0
+httpx
+beautifulsoup4
+pydantic>=2.0
+google-cloud-logging
