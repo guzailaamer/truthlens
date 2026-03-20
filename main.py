@@ -55,7 +55,6 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    # TODO: restrict to specific origins before production
     allow_origins=["*"],
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
