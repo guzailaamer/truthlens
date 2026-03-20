@@ -25,7 +25,7 @@ _MODEL: str = "gemini-3-flash-preview"
 
 # Client created once at module level — never per request.
 # Falls back to us-central1 + gemini-2.0-flash-001 if location is not "global".
-client: genai.Client = genai.Client(
+_client: genai.Client = genai.Client(
     vertexai=True,
     project=GCP_PROJECT,
     location=_LOCATION,
@@ -266,7 +266,7 @@ async def fact_check(
     system_prompt = _SYSTEM_PROMPT.format(current_date=current_date)
 
     if request.audio_base64 and request.audio_mime_type:
-        audio_text = await transcribe_audio(request.audio_base64, request.audio_mime_type, client)
+        audio_text = await transcribe_audio(request.audio_base64, request.audio_mime_type, _client)
         if audio_text:
             request.text = (request.text or "") + f"\n\n(Transcribed from Voice Note)\n{audio_text}"
 
@@ -320,7 +320,7 @@ async def fact_check(
         article_content = article_text if request.url and 'fetch_article' in locals() and 'article_text' in locals() else None
         
         # 1. Extract claims
-        claims_list = await extract_claims(request.text, article_content, has_image, client)
+        claims_list = await extract_claims(request.text, article_content, has_image, _client)
         
         # Deduce leaning purely from extracted claims structure to pass hint IF we could, 
         # but since we fire them in parallel, we'll just run them and merge after.
@@ -339,8 +339,8 @@ async def fact_check(
             config=config,
         )
 
-        synthesis_task = client.aio.models.generate_content(**synthesis_kwargs)
-        verify_task = verify_claims(claims_list, context_str, client)
+        synthesis_task = _client.aio.models.generate_content(**synthesis_kwargs)
+        verify_task = verify_claims(claims_list, context_str, _client)
         
         response, claim_results = await asyncio.gather(synthesis_task, verify_task)
 
